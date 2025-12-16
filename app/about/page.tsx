@@ -20,7 +20,7 @@ export default function AboutPage() {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-oblong font-bold text-white mb-6">OUR STORY</h1>
             <p className="text-white/90 font-gill-sans text-xl leading-relaxed max-w-3xl">
               At Kanabco, we believe that furniture should be more than functional—it should inspire, comfort, and
-              reflect your unique style. Since our founding, we've been dedicated to creating pieces that transform
+              reflect your unique style. Since our founding, we&apos;ve been dedicated to creating pieces that transform
               houses into homes.
             </p>
           </div>
@@ -34,12 +34,12 @@ export default function AboutPage() {
             <div>
               <h2 className="text-3xl md:text-4xl font-oblong font-bold text-gray-900 mb-6">Our Mission</h2>
               <p className="text-gray-600 font-gill-sans text-lg leading-relaxed mb-6">
-                We're on a mission to make beautiful, sustainable furniture accessible to everyone. Every piece we
+                We&apos;re on a mission to make beautiful, sustainable furniture accessible to everyone. Every piece we
                 create is thoughtfully designed with both form and function in mind, using materials that respect our
                 planet and craftsmanship that stands the test of time.
               </p>
               <p className="text-gray-600 font-gill-sans text-lg leading-relaxed">
-                From our modern seating collections to our innovative lighting solutions, we're committed to helping you
+                From our modern seating collections to our innovative lighting solutions, we&apos;re committed to helping you
                 create spaces that truly feel like home.
               </p>
             </div>
@@ -108,7 +108,7 @@ export default function AboutPage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-oblong font-bold text-gray-900 mb-4">Meet Our Team</h2>
             <p className="text-gray-600 font-gill-sans text-lg max-w-3xl mx-auto">
-              The passionate individuals behind Kanabco's innovative designs and exceptional service.
+              The passionate individuals behind Kanabco&apos;s innovative designs and exceptional service.
             </p>
           </div>
 

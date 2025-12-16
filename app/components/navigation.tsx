@@ -4,9 +4,10 @@ import { Search, User, ShoppingCart, ChevronDown, ArrowRight } from "lucide-reac
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { hr } from "framer-motion/client"
+import { useCart } from "../contexts/CartContext"
 
 export default function Navigation() {
+  const { getCartItemCount } = useCart()
   const [isFixed, setIsFixed] = useState(false)
   const [showProductsDropdown, setShowProductsDropdown] = useState(false)
 
@@ -138,8 +139,13 @@ export default function Navigation() {
               </button>
               </Link>
               <Link href="/cart">
-              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
                 <ShoppingCart className="w-5 h-5 text-gray-600" />
+                {getCartItemCount() > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#ed6b3e] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {getCartItemCount() > 99 ? "99+" : getCartItemCount()}
+                  </span>
+                )}
               </button>
               </Link>
             </div>

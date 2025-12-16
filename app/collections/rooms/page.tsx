@@ -1,254 +1,269 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ChevronDown, Filter, Grid, List } from "lucide-react"
+import { ChevronDown, Filter, Grid, List, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react"
 import Navigation from "@/app/components/navigation"
 import Footer from "@/app/components/footer"
+import { useCart } from "@/app/contexts/CartContext"
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
-interface Product {
-  id: string
-  name: string
-  price: number
-  originalPrice?: number
-  discount?: number
-  image: string
-  includes: string[]
-  roomType: string
+interface ProductVariant {
+  id: number
+  productId: number
+  color: string
+  colorHex?: string | null
+  attributes?: string | null
+  imageUrl?: string | null
+  mediaUrls?: string | null
+  priceOverride?: number | null
+  sku?: string | null
+  isActive: boolean
+  isAvailable?: boolean
+  isOutOfStock?: boolean
 }
 
-const roomProducts: Product[] = [
-  {
-    id: "modern-living-room-set",
-    name: "Modern Living Room Set",
-    price: 850000.0,
-    originalPrice: 950000.0,
-    discount: 11,
-    image: "/placeholder.svg?height=400&width=300&text=Modern+Living+Room+Set",
-    includes: ["3-Seat Sofa", "2 Armchairs", "Coffee Table", "Side Table"],
-    roomType: "Living Room",
-  },
-  {
-    id: "scandinavian-bedroom-collection",
-    name: "Scandinavian Bedroom Collection",
-    price: 650000.0,
-    image: "/placeholder.svg?height=400&width=300&text=Scandinavian+Bedroom+Collection",
-    includes: ["King Bed", "2 Nightstands", "Dresser", "Wardrobe"],
-    roomType: "Bedroom",
-  },
-  {
-    id: "executive-office-suite",
-    name: "Executive Office Suite",
-    price: 420000.0,
-    originalPrice: 480000.0,
-    discount: 13,
-    image: "/placeholder.svg?height=400&width=300&text=Executive+Office+Suite",
-    includes: ["Executive Desk", "Office Chair", "Bookshelf", "Filing Cabinet"],
-    roomType: "Office",
-  },
-  {
-    id: "contemporary-dining-set",
-    name: "Contemporary Dining Set",
-    price: 380000.0,
-    image: "/placeholder.svg?height=400&width=300&text=Contemporary+Dining+Set",
-    includes: ["Dining Table", "6 Dining Chairs", "Buffet", "Bar Cart"],
-    roomType: "Dining Room",
-  },
-  {
-    id: "minimalist-home-office",
-    name: "Minimalist Home Office",
-    price: 280000.0,
-    originalPrice: 320000.0,
-    discount: 13,
-    image: "/placeholder.svg?height=400&width=300&text=Minimalist+Home+Office",
-    includes: ["Standing Desk", "Ergonomic Chair", "Storage Unit", "Desk Lamp"],
-    roomType: "Home Office",
-  },
-  {
-    id: "luxury-master-bedroom",
-    name: "Luxury Master Bedroom",
-    price: 950000.0,
-    image: "/placeholder.svg?height=400&width=300&text=Luxury+Master+Bedroom",
-    includes: ["King Bed", "2 Nightstands", "Dresser", "Bench", "Armchair"],
-    roomType: "Master Bedroom",
-  },
-]
+interface Product {
+  id: number
+  name: string
+  price: number
+  compareAtPrice?: number | null
+  imageUrl: string | null
+  colors: string[]
+  variants: ProductVariant[]
+  variantAttributes?: string | null
+  categoryName: string
+  isActive: boolean
+}
 
 const sortOptions = ["Featured", "Price: Low to High", "Price: High to Low", "Newest", "Best Selling"]
-const roomTypes = ["All Rooms", "Living Room", "Bedroom", "Office", "Dining Room", "Home Office", "Master Bedroom"]
 
 export default function RoomsCollectionPage() {
+  const { addToCart: addItemToCart } = useCart()
   const [sortBy, setSortBy] = useState("Featured")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showFilters, setShowFilters] = useState(false)
-  const [selectedRoomType, setSelectedRoomType] = useState("All Rooms")
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedVariants, setSelectedVariants] = useState<Record<number, ProductVariant | null>>({})
+  const [productImageIndex, setProductImageIndex] = useState<Record<number, number>>({})
 
-  const filteredProducts = roomProducts.filter(
-    (product) => selectedRoomType === "All Rooms" || product.roomType === selectedRoomType,
-  )
+  useEffect(() => {
+    fetchProducts()
+  }, [])
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`${API_BASE_URL}/api/Product?includeDrafts=false&categoryName=ROOMS`)
+      if (response.ok) {
+        const data = await response.json()
+        const mappedProducts = data
+          .filter((p: any) => p.isActive)
+          .map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            compareAtPrice: p.compareAtPrice,
+            imageUrl: p.imageUrl,
+            colors: p.colors || [],
+            variants: p.variants || [],
+            variantAttributes: p.variantAttributes,
+            categoryName: p.categoryName,
+            isActive: p.isActive,
+          }))
+        setProducts(mappedProducts)
+      } else {
+        console.error("Failed to fetch products:", response.statusText)
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getDiscount = (price: number, compareAtPrice?: number | null) => {
+    if (!compareAtPrice || compareAtPrice <= price) return null
+    return Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
+  }
+
+  const sortedProducts = [...products].sort((a, b) => {
+    switch (sortBy) {
+      case "Price: Low to High":
+        return a.price - b.price
+      case "Price: High to Low":
+        return b.price - a.price
+      case "Newest":
+        return b.id - a.id
+      default:
+        return 0
+    }
+  })
+
+  const handleAddToCart = (product: Product, variant: ProductVariant | null) => {
+    const variantId = variant?.id || 0
+    const color = variant?.color || variant?.attributes ? (() => {
+      try {
+        const attrs = typeof variant.attributes === 'string' ? JSON.parse(variant.attributes) : variant.attributes
+        return Object.values(attrs)[0] as string || "Default"
+      } catch {
+        return "Default"
+      }
+    })() : "Default"
+    
+    addItemToCart({
+      productId: product.id,
+      variantId: variantId,
+      name: product.name,
+      color: color,
+      size: null,
+      price: variant?.priceOverride || product.price,
+      quantity: 1,
+      image: variant?.imageUrl || product.imageUrl || "/placeholder.svg",
+      sku: variant?.sku || null
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 font-gill-sans">Loading products...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
 
-      {/* Hero Section */}
-      <div className="relative h-[40vh] bg-[#18395c]">
-        <div className="absolute inset-0 bg-gradient-to-r from-deep-navy to-deep-navy/80" />
-        <div className="relative z-10 flex h-full items-center px-8 lg:px-16">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-oblong font-bold text-white mb-4">ROOMS COLLECTION</h1>
-            <p className="text-white/90 font-gill-sans text-lg leading-relaxed max-w-2xl">
-              Complete room solutions for modern living! Discover our curated room sets that bring together perfectly
-              matched furniture pieces for a cohesive, stylish look.
-            </p>
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-8 py-16">
-        {/* Breadcrumb */}
-        <nav className="flex items-center space-x-2 text-sm font-gill-sans text-gray-600 mb-8">
-          <Link href="/" className="hover:text-burnt-orange">
-            Home
-          </Link>
-          <span>/</span>
-          <Link href="/collections" className="hover:text-burnt-orange">
-            Collections
-          </Link>
-          <span>/</span>
-          <span className="text-gray-900">Rooms</span>
-        </nav>
+        <div className="mb-8">
+          <h1 className="text-4xl font-oblong font-bold text-gray-900 mb-4">ROOMS</h1>
+          <p className="text-gray-600 font-gill-sans text-lg">
+            Complete room solutions for modern living
+          </p>
+        </div>
 
         {/* Filters and Sort */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-2">
-              <Filter className="w-4 h-4" />
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="font-gill-sans"
+            >
+              <Filter className="w-4 h-4 mr-2" />
               Filters
             </Button>
-
-            {/* Room Type Filter */}
-            <div className="flex gap-2 overflow-x-auto">
-              {roomTypes.map((roomType) => (
-                <button
-                  key={roomType}
-                  onClick={() => setSelectedRoomType(roomType)}
-                  className={`px-4 py-2 rounded-full text-sm font-gill-sans whitespace-nowrap transition-colors ${
-                    selectedRoomType === roomType
-                      ? "bg-burnt-orange text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  {roomType}
-                </button>
-              ))}
-            </div>
-
-            <span className="text-gray-600 font-gill-sans">{filteredProducts.length} room sets</span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* View Mode Toggle */}
-            <div className="flex border border-gray-300 rounded-lg overflow-hidden">
-              <button
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === "grid" ? "default" : "outline"}
+                size="sm"
                 onClick={() => setViewMode("grid")}
-                className={`p-2 ${viewMode === "grid" ? "bg-gray-200" : "bg-white"}`}
               >
                 <Grid className="w-4 h-4" />
-              </button>
-              <button
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "outline"}
+                size="sm"
                 onClick={() => setViewMode("list")}
-                className={`p-2 ${viewMode === "list" ? "bg-gray-200" : "bg-white"}`}
               >
                 <List className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Sort Dropdown */}
-            <div className="relative">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm font-gill-sans"
-              >
-                {sortOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+              </Button>
             </div>
           </div>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm font-gill-sans"
+          >
+            {sortOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Products Grid */}
-        <div
-          className={`grid gap-6 ${viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}
-        >
-          {filteredProducts.map((product) => (
-            <Link key={product.id} href={`/product/${product.id}`}>
-              <div
-                className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden ${
-                  viewMode === "list" ? "flex" : ""
-                }`}
-              >
-                <div className={`relative bg-gray-100 ${viewMode === "list" ? "w-64 h-48" : "aspect-[4/3]"}`}>
-                  <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-cover" />
-                  {product.discount && (
-                    <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-medium px-3 py-1 rounded-full">
-                      Save {product.discount}%
-                    </div>
-                  )}
-                  <div className="absolute top-4 right-4 bg-burnt-orange text-white text-xs font-medium px-3 py-1 rounded-full">
-                    {product.roomType}
-                  </div>
-                </div>
-                <div className={`p-6 ${viewMode === "list" ? "flex-1" : ""}`}>
-                  <p className="text-xs uppercase text-gray-500 font-gill-sans tracking-widest mb-1">Room Set</p>
-                  <h3 className="text-lg font-medium text-gray-900 font-gill-sans mb-2">{product.name}</h3>
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-lg font-bold text-gray-900">
-                      LE {product.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </span>
-                    {product.originalPrice && (
-                      <span className="text-sm text-gray-400 line-through">
-                        LE {product.originalPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm font-gill-sans font-medium text-gray-700 mb-2">Includes:</p>
-                    <ul className="text-sm text-gray-600 font-gill-sans space-y-1">
-                      {product.includes.map((item, index) => (
-                        <li key={index} className="flex items-center">
-                          <div className="w-1.5 h-1.5 bg-burnt-orange rounded-full mr-2" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {/* Load More */}
-        <div className="text-center mt-12">
-          <Button
-            variant="outline"
-            className="px-8 py-3 rounded-full border-2 border-gray-300 text-gray-700 hover:border-burnt-orange hover:text-burnt-orange font-gill-sans font-semibold bg-transparent"
+        {sortedProducts.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-gray-600 font-gill-sans">No products found in this category.</p>
+          </div>
+        ) : (
+          <div
+            className={`grid gap-6 ${
+              viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"
+            }`}
           >
-            Load More Room Sets
-          </Button>
-        </div>
+            {sortedProducts.map((product) => {
+              const discount = getDiscount(product.price, product.compareAtPrice)
+              const imageUrl = product.imageUrl || "/placeholder.svg?height=400&width=300&text=" + encodeURIComponent(product.name)
+              const selectedVariant = selectedVariants[product.id] || product.variants[0] || null
+              
+              return (
+                <Link href={`/product/${product.id}`} key={product.id}>
+                  <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow overflow-hidden group">
+                    <div className="relative aspect-[3/4] overflow-hidden">
+                      <Image
+                        src={imageUrl}
+                        alt={product.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      {discount && (
+                        <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-medium px-3 py-1 rounded-full">
+                          Save {discount}%
+                        </div>
+                      )}
+                      <Button
+                        className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity bg-[#ed6b3e] hover:bg-[#d55a2e] text-white"
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          handleAddToCart(product, selectedVariant)
+                        }}
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="p-4">
+                      <p className="text-xs uppercase text-[#18395c] font-gill-sans tracking-widest mb-1">
+                        {product.categoryName}
+                      </p>
+                      <h3 className="text-lg font-medium text-[#18395c] font-gill-sans mb-2 line-clamp-2">
+                        {product.name}
+                      </h3>
+                      <div className="flex justify-center items-center gap-2">
+                        <span className="text-lg font-bold text-[#18395c]">
+                          LE {product.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                        </span>
+                        {product.compareAtPrice && product.compareAtPrice > product.price && (
+                          <span className="text-sm text-gray-400 line-through">
+                            LE {product.compareAtPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       <Footer />
     </div>
   )
 }
+
+
+
+

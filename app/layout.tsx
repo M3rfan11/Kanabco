@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import SidebarSocial from "./components/SidebarSocial";
+import ConditionalSidebar from "./components/ConditionalSidebar";
+import { CartProvider } from "./contexts/CartContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,8 +30,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         style={{ fontFamily: "Gill, sans-serif" }}
       >
-        <SidebarSocial/>
-        {children}
+        <CartProvider>
+          <ConditionalSidebar/>
+          {children}
+        </CartProvider>
       </body>
     </html>
   );

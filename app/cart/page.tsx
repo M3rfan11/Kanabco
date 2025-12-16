@@ -4,70 +4,37 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Minus, Plus, X, ShoppingBag } from "lucide-react"
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react"
 import Navigation from "../components/navigation"
 import Footer from "../components/footer"
-
-
-interface CartItem {
-  id: string
-  name: string
-  color: string
-  price: number
-  quantity: number
-  image: string
-}
-
-const initialCartItems: CartItem[] = [
-  {
-    id: "flow-chair-brown",
-    name: "Flow Side Chair",
-    color: "Brown",
-    price: 62483.0,
-    quantity: 2,
-    image: "/placeholder.svg?height=200&width=200&text=Brown+Chair",
-  },
-  {
-    id: "pendant-lamp-black",
-    name: "Aura Pendant Lamp",
-    color: "Black",
-    price: 35875.0,
-    quantity: 1,
-    image: "/placeholder.svg?height=200&width=200&text=Pendant+Light",
-  },
-]
+import { useCart } from "../contexts/CartContext"
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>(initialCartItems)
-  const [promoCode, setPromoCode] = useState("")
-
-  const updateQuantity = (id: string, newQuantity: number) => {
-    if (newQuantity === 0) {
-      removeItem(id)
-      return
-    }
-    setCartItems((prev) => prev.map((item) => (item.id === id ? { ...item, quantity: newQuantity } : item)))
-  }
-
-  const removeItem = (id: string) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id))
-  }
+  const { cartItems, removeFromCart, updateQuantity, clearCart, getCartItemCount } = useCart()
+  const [loading, setLoading] = useState(false)
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const shipping = subtotal > 10000 ? 0 : 150
-  const tax = subtotal * 0.14 // 14% VAT
-  const total = subtotal + shipping + tax
+  const shippingCost = subtotal >= 10000 ? 0 : 150 // Free shipping over LE 10,000
+  const total = subtotal + shippingCost
+
+  const handleQuantityChange = (productId: number, variantId: number | null, newQuantity: number) => {
+    if (newQuantity < 1) {
+      removeFromCart(productId, variantId || 0)
+    } else {
+      updateQuantity(productId, variantId || 0, newQuantity)
+    }
+  }
 
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
         <div className="max-w-4xl mx-auto px-8 py-16 text-center">
-          <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-8" />
+          <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-6" />
           <h1 className="text-3xl font-oblong font-bold text-gray-900 mb-4">Your Cart is Empty</h1>
-          <p className="text-gray-600 font-gill-sans mb-8">Looks like you haven't added any items to your cart yet.</p>
+          <p className="text-gray-600 font-gill-sans mb-8">Looks like you haven't added anything to your cart yet.</p>
           <Link href="/collections">
-            <Button className="bg-burnt-orange text-white font-gill-sans font-semibold px-8 py-3 rounded-full hover:bg-burnt-orange/90">
+            <Button className="bg-[#ed6b3e] hover:bg-[#d55a2e] text-white font-gill-sans font-semibold px-8 py-3 rounded-full">
               Continue Shopping
             </Button>
           </Link>
@@ -82,113 +49,155 @@ export default function CartPage() {
       <Navigation />
 
       <div className="max-w-7xl mx-auto px-8 py-16">
-        <h1 className="text-4xl font-oblong font-bold text-gray-900 mb-8">Shopping Cart</h1>
+        <div className="mb-8">
+          <h1 className="text-3xl font-oblong font-bold text-gray-900 mb-2">Shopping Cart</h1>
+          <p className="text-gray-600 font-gill-sans">
+            {getCartItemCount()} {getCartItemCount() === 1 ? "item" : "items"} in your cart
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             {cartItems.map((item) => (
-              <div key={item.id} className="bg-white rounded-xl p-6 shadow-sm">
-                <div className="flex items-center gap-4">
-                  <div className="relative w-24 h-24 bg-gray-100 rounded-lg overflow-hidden">
-                    <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
-                  </div>
+              <div
+                key={`${item.productId}-${item.variantId || 0}`}
+                className="bg-white rounded-lg shadow-sm p-6 flex gap-6"
+              >
+                {/* Product Image */}
+                <div className="relative w-32 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                  <Image
+                    src={item.image || "/placeholder.svg"}
+                    alt={item.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
 
-                  <div className="flex-1">
-                    <h3 className="text-lg font-gill-sans font-medium text-gray-900">{item.name}</h3>
-                    <p className="text-sm text-gray-600 font-gill-sans">Color: {item.color}</p>
-                    <p className="text-lg font-bold text-gray-900 mt-1">
-                      LE {item.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center border border-gray-300 rounded-full">
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="p-2 hover:bg-gray-100 rounded-l-full transition-colors"
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <span className="px-4 py-2 font-gill-sans font-medium">{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="p-2 hover:bg-gray-100 rounded-r-full transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
+                {/* Product Details */}
+                <div className="flex-1">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="text-lg font-oblong font-bold text-gray-900 mb-1">{item.name}</h3>
+                      <div className="text-sm text-gray-600 font-gill-sans space-y-0.5">
+                        <p>Color: {item.color}</p>
+                        {item.size && <p>Size: {item.size}</p>}
+                        {item.sku && <p>SKU: {item.sku}</p>}
+                      </div>
                     </div>
-
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFromCart(item.productId, item.variantId || 0)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
-                      <X className="w-5 h-5" />
-                    </button>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  {/* Quantity and Price */}
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-gray-600 font-gill-sans">Quantity:</span>
+                      <div className="flex items-center border border-gray-300 rounded-md">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleQuantityChange(item.productId, item.variantId, item.quantity - 1)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </Button>
+                        <span className="w-12 text-center font-gill-sans">{item.quantity}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleQuantityChange(item.productId, item.variantId, item.quantity + 1)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-gray-900">
+                        LE {(item.price * item.quantity).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      </p>
+                      <p className="text-sm text-gray-500 font-gill-sans">
+                        LE {item.price.toLocaleString("en-US", { minimumFractionDigits: 2 })} each
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
+
+            {/* Clear Cart Button */}
+            <div className="pt-4">
+              <Button
+                variant="outline"
+                onClick={clearCart}
+                className="text-red-600 border-red-200 hover:bg-red-50"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clear Cart
+              </Button>
+            </div>
           </div>
 
           {/* Order Summary */}
-          <div className="bg-white rounded-xl p-6 shadow-sm h-fit">
-            <h2 className="text-xl font-oblong font-bold text-gray-900 mb-6">Order Summary</h2>
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-8">
+              <h2 className="text-xl font-oblong font-bold text-gray-900 mb-6">Order Summary</h2>
 
-            <div className="space-y-4 mb-6">
-              <div className="flex justify-between text-gray-600 font-gill-sans">
-                <span>Subtotal:</span>
-                <span>LE {subtotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
-              </div>
-              <div className="flex justify-between text-gray-600 font-gill-sans">
-                <span>Shipping:</span>
-                <span>{shipping === 0 ? "Free" : `LE ${shipping.toFixed(2)}`}</span>
-              </div>
-              <div className="flex justify-between text-gray-600 font-gill-sans">
-                <span>Tax (14%):</span>
-                <span>LE {tax.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
-              </div>
-              <div className="border-t pt-4">
-                <div className="flex justify-between text-lg font-bold text-gray-900">
-                  <span>Total:</span>
+              {/* Price Breakdown */}
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between text-gray-600 font-gill-sans">
+                  <span>Subtotal</span>
+                  <span>LE {subtotal.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between text-gray-600 font-gill-sans">
+                  <span>Shipping</span>
+                  <span>
+                    {shippingCost === 0 ? (
+                      <span className="text-green-600 font-semibold">Free</span>
+                    ) : (
+                      `LE ${shippingCost.toLocaleString("en-US", { minimumFractionDigits: 2 })}`
+                    )}
+                  </span>
+                </div>
+                {subtotal < 10000 && (
+                  <p className="text-xs text-gray-500 font-gill-sans">
+                    Add LE {(10000 - subtotal).toLocaleString("en-US", { minimumFractionDigits: 2 })} more for free shipping
+                  </p>
+                )}
+                <div className="border-t pt-3 flex justify-between text-lg font-bold text-gray-900">
+                  <span>Total</span>
                   <span>LE {total.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
                 </div>
               </div>
-            </div>
 
-            {/* Promo Code */}
-            <div className="mb-6">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Promo code"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-gill-sans focus:outline-none focus:ring-1 focus:ring-burnt-orange"
-                />
-                <Button variant="outline" className="px-4 py-2 text-sm font-gill-sans bg-transparent">
-                  Apply
+              {/* Checkout Button */}
+              <Link href="/checkout" className="block">
+                <Button
+                  className="w-full bg-[#ed6b3e] hover:bg-[#d55a2e] text-white font-gill-sans font-semibold py-3 rounded-full flex items-center justify-center gap-2"
+                  disabled={loading}
+                >
+                  Proceed to Checkout
+                  <ArrowRight className="w-4 h-4" />
                 </Button>
-              </div>
+              </Link>
+
+              {/* Continue Shopping */}
+              <Link href="/collections" className="block mt-4">
+                <Button
+                  variant="outline"
+                  className="w-full font-gill-sans"
+                >
+                  Continue Shopping
+                </Button>
+              </Link>
             </div>
-
-            <Link href="/checkout">
-              <Button
-                className="w-full py-4 rounded-full text-white font-gill-sans font-semibold tracking-wide hover:opacity-90 transition-opacity mb-4"
-                style={{ backgroundColor: "#18395c" }}
-              >
-                Proceed to Checkout
-              </Button>
-            </Link>
-
-            <Link href="/collections">
-              <Button
-                variant="outline"
-                className="w-full py-4 rounded-full border-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-gill-sans font-semibold tracking-wide bg-transparent"
-              >
-                Continue Shopping
-              </Button>
-            </Link>
           </div>
         </div>
       </div>
@@ -197,3 +206,6 @@ export default function CartPage() {
     </div>
   )
 }
+
+
+

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -8,105 +8,98 @@ import { ChevronDown, Filter, Grid, List } from "lucide-react"
 import Navigation from "@/app/components/navigation"
 import Footer from "@/app/components/footer"
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
-interface Product {
-  id: string
-  name: string
-  price: number
-  originalPrice?: number
-  discount?: number
-  image: string
-  colors: string[]
-  category: string
+interface ProductVariant {
+  id: number
+  productId: number
+  color: string
+  colorHex?: string | null
+  attributes?: string | null
+  imageUrl?: string | null
+  mediaUrls?: string | null
+  priceOverride?: number | null
+  sku?: string | null
+  isActive: boolean
+  quantity?: number
+  isOutOfStock?: boolean
+  isAvailable?: boolean
 }
 
-const homeDecorProducts: Product[] = [
-  {
-    id: "zenith-stackable-tray",
-    name: "Zenith Stackable Tray",
-    price: 3953.0,
-    image: "/placeholder.svg?height=400&width=300&text=Zenith+Stackable+Tray",
-    colors: ["White", "Brown", "Blue"],
-    category: "Accessories",
-  },
-  {
-    id: "streamline-waste-bin",
-    name: "Streamline Waste Bin",
-    price: 3752.0,
-    originalPrice: 5002.67,
-    discount: 25,
-    image: "/placeholder.svg?height=400&width=300&text=Streamline+Waste+Bin",
-    colors: ["Green", "Brown"],
-    category: "Accessories",
-  },
-  {
-    id: "aura-pendant-lamp",
-    name: "Aura Pendant Lamp",
-    price: 35875.0,
-    originalPrice: 38000.0,
-    discount: 6,
-    image: "/placeholder.svg?height=400&width=300&text=Aura+Pendant+Lamp",
-    colors: ["Black", "White", "Brass"],
-    category: "Lighting",
-  },
-  {
-    id: "vista-carafe",
-    name: "Vista Carafe",
-    price: 4899.0,
-    originalPrice: 5200.0,
-    discount: 6,
-    image: "/placeholder.svg?height=400&width=300&text=Vista+Carafe",
-    colors: ["Clear", "Amber", "Blue"],
-    category: "Accessories",
-  },
-  {
-    id: "modern-wall-mirror",
-    name: "Modern Wall Mirror",
-    price: 12500.0,
-    image: "/placeholder.svg?height=400&width=300&text=Modern+Wall+Mirror",
-    colors: ["Gold Frame", "Black Frame", "Silver Frame"],
-    category: "Mirrors",
-  },
-  {
-    id: "ceramic-vase-set",
-    name: "Ceramic Vase Set",
-    price: 6800.0,
-    originalPrice: 7500.0,
-    discount: 9,
-    image: "/placeholder.svg?height=400&width=300&text=Ceramic+Vase+Set",
-    colors: ["White", "Terracotta", "Navy"],
-    category: "Accessories",
-  },
-  {
-    id: "scandinavian-floor-lamp",
-    name: "Scandinavian Floor Lamp",
-    price: 18500.0,
-    image: "/placeholder.svg?height=400&width=300&text=Scandinavian+Floor+Lamp",
-    colors: ["Natural Wood", "Black", "White"],
-    category: "Lighting",
-  },
-  {
-    id: "decorative-bookends",
-    name: "Decorative Bookends",
-    price: 2800.0,
-    image: "/placeholder.svg?height=400&width=300&text=Decorative+Bookends",
-    colors: ["Brass", "Black", "Copper"],
-    category: "Accessories",
-  },
-]
+interface Product {
+  id: number
+  name: string
+  price: number
+  compareAtPrice?: number | null
+  imageUrl: string | null
+  colors: string[]
+  variants: ProductVariant[]
+  variantAttributes?: string | null
+  categoryName: string
+  isActive: boolean
+}
 
 const sortOptions = ["Featured", "Price: Low to High", "Price: High to Low", "Newest", "Best Selling"]
-const categories = ["All Categories", "Accessories", "Lighting", "Mirrors", "Textiles", "Art"]
 
 export default function HomeDecorsCollectionPage() {
   const [sortBy, setSortBy] = useState("Featured")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showFilters, setShowFilters] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState("All Categories")
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filteredProducts = homeDecorProducts.filter(
-    (product) => selectedCategory === "All Categories" || product.category === selectedCategory,
-  )
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch(`${API_BASE_URL}/api/Product?includeDrafts=false&categoryName=HOME DECORS`)
+        if (response.ok) {
+          const data = await response.json()
+          const mappedProducts = data
+            .filter((p: any) => p.isActive)
+            .map((p: any) => ({
+              id: p.id,
+              name: p.name,
+              price: p.price,
+              compareAtPrice: p.compareAtPrice,
+              imageUrl: p.imageUrl,
+              colors: p.colors || [],
+              variants: p.variants || [],
+              variantAttributes: p.variantAttributes,
+              categoryName: p.categoryName,
+              isActive: p.isActive,
+            }))
+          setProducts(mappedProducts)
+        } else {
+          console.error("Failed to fetch products:", response.statusText)
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [])
+
+  const sortedProducts = [...products].sort((a, b) => {
+    switch (sortBy) {
+      case "Price: Low to High":
+        return a.price - b.price
+      case "Price: High to Low":
+        return b.price - a.price
+      case "Newest":
+        return b.id - a.id
+      default:
+        return 0
+    }
+  })
+
+  const getDiscount = (price: number, compareAtPrice?: number | null) => {
+    if (!compareAtPrice || compareAtPrice <= price) return null
+    return Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -149,25 +142,7 @@ export default function HomeDecorsCollectionPage() {
               <Filter className="w-4 h-4" />
               Filters
             </Button>
-
-            {/* Category Filter */}
-            <div className="flex gap-2 overflow-x-auto">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-2 rounded-full text-sm font-gill-sans whitespace-nowrap transition-colors ${
-                    selectedCategory === category
-                      ? "bg-burnt-orange text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-
-            <span className="text-gray-600 font-gill-sans">{filteredProducts.length} products</span>
+            <span className="text-gray-600 font-gill-sans">{products.length} products</span>
           </div>
 
           <div className="flex items-center gap-4">
@@ -206,60 +181,165 @@ export default function HomeDecorsCollectionPage() {
         </div>
 
         {/* Products Grid */}
-        <div
-          className={`grid gap-6 ${
-            viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"
-          }`}
-        >
-          {filteredProducts.map((product) => (
-            <Link key={product.id} href={`/product/${product.id}`}>
-              <div
-                className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden ${
-                  viewMode === "list" ? "flex" : ""
-                }`}
-              >
-                <div className={`relative bg-gray-100 ${viewMode === "list" ? "w-48 h-48" : "aspect-[3/4]"}`}>
-                  <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-cover" />
-                  {product.discount && (
-                    <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-medium px-3 py-1 rounded-full">
-                      Save {product.discount}%
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600 font-gill-sans">Loading products...</p>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600 font-gill-sans">No products found in this category.</p>
+          </div>
+        ) : (
+          <div
+            className={`grid gap-6 ${
+              viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"
+            }`}
+          >
+            {sortedProducts.map((product) => {
+              const discount = getDiscount(product.price, product.compareAtPrice)
+              const imageUrl = product.imageUrl || "/placeholder.svg?height=400&width=300&text=" + encodeURIComponent(product.name)
+              
+              return (
+                <Link key={product.id} href={`/product/${product.id}`}>
+                  <div
+                    className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden ${
+                      viewMode === "list" ? "flex" : ""
+                    }`}
+                  >
+                    <div className={`relative bg-gray-100 ${viewMode === "list" ? "w-48 h-48" : "aspect-[3/4]"}`}>
+                      <Image src={imageUrl} alt={product.name} fill className="object-cover" />
+                      {discount && (
+                        <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-medium px-3 py-1 rounded-full">
+                          Save {discount}%
+                        </div>
+                      )}
                     </div>
-                  )}
-                  <div className="absolute top-4 right-4 bg-burnt-orange text-white text-xs font-medium px-3 py-1 rounded-full">
-                    {product.category}
+                    <div className={`p-4 ${viewMode === "list" ? "flex-1" : ""}`}>
+                      <p className="text-xs uppercase text-gray-500 font-gill-sans tracking-widest mb-1">Home Decors</p>
+                      <h3 className="text-lg font-medium text-gray-900 font-gill-sans mb-2">{product.name}</h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg font-bold text-gray-900">
+                          LE {product.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                        </span>
+                        {product.compareAtPrice && product.compareAtPrice > product.price && (
+                          <span className="text-sm text-gray-400 line-through">
+                            LE {product.compareAtPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                          </span>
+                        )}
+                      </div>
+                      {product.variants && product.variants.length > 0 && (() => {
+                        let attributeNames: string[] = []
+                        try {
+                          if (product.variantAttributes) {
+                            attributeNames = typeof product.variantAttributes === 'string' 
+                              ? JSON.parse(product.variantAttributes) 
+                              : product.variantAttributes
+                          }
+                        } catch {
+                          if (product.variants[0]?.attributes) {
+                            try {
+                              const attrs = typeof product.variants[0].attributes === 'string'
+                                ? JSON.parse(product.variants[0].attributes)
+                                : product.variants[0].attributes
+                              attributeNames = Object.keys(attrs || {})
+                            } catch {
+                              attributeNames = ["Color"]
+                            }
+                          }
+                        }
+                        
+                        const colorAttrName = attributeNames[0] || "Color"
+                        const sizeAttrName = attributeNames.length > 1 ? attributeNames[1] : (attributeNames.includes("Size") ? "Size" : null)
+                        
+                        const availableColors = new Set<string>()
+                        const availableSizes = new Set<string>()
+                        
+                        product.variants.forEach((variant: ProductVariant) => {
+                          if (variant.isAvailable === false) return
+                          
+                          try {
+                            let attrs: Record<string, string> = {}
+                            if (variant.attributes) {
+                              attrs = typeof variant.attributes === 'string' 
+                                ? JSON.parse(variant.attributes) 
+                                : variant.attributes
+                            }
+                            
+                            const colorValue = attrs[colorAttrName] || variant.color || ""
+                            if (colorValue) availableColors.add(colorValue)
+                            
+                            if (sizeAttrName && attrs[sizeAttrName]) {
+                              availableSizes.add(attrs[sizeAttrName])
+                            }
+                          } catch {}
+                        })
+                        
+                        return (
+                          <div className="pt-2 border-t border-gray-200 space-y-2">
+                            {availableColors.size > 0 && (
+                              <div>
+                                <p className="text-xs text-gray-500 font-gill-sans mb-1">Colors:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {Array.from(availableColors).map((color, idx) => {
+                                    const colorVariant = product.variants.find((v: ProductVariant) => {
+                                      try {
+                                        if (v.attributes) {
+                                          const attrs = typeof v.attributes === 'string' ? JSON.parse(v.attributes) : v.attributes
+                                          return (attrs[colorAttrName] || v.color) === color
+                                        }
+                                        return v.color === color
+                                      } catch {
+                                        return v.color === color
+                                      }
+                                    })
+                                    const colorHex = colorVariant?.colorHex || "#cccccc"
+                                    const finalColor = colorHex && colorHex.trim() !== "" 
+                                      ? (colorHex.startsWith("#") ? colorHex : `#${colorHex}`)
+                                      : "#cccccc"
+                                    
+                                    return (
+                                      <div
+                                        key={idx}
+                                        className="flex items-center gap-1.5 px-2 py-1 rounded-full border border-gray-200 bg-white"
+                                        title={color}
+                                      >
+                                        <div
+                                          className="w-4 h-4 rounded-full border border-gray-300"
+                                          style={{ backgroundColor: finalColor }}
+                                        />
+                                        <span className="text-xs text-gray-700 font-gill-sans">{color}</span>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {availableSizes.size > 0 && (
+                              <div>
+                                <p className="text-xs text-gray-500 font-gill-sans mb-1">Sizes:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {Array.from(availableSizes).sort().map((size, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="px-2 py-1 text-xs font-gill-sans text-gray-700 bg-gray-100 rounded border border-gray-200"
+                                    >
+                                      {size}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })()}
+                    </div>
                   </div>
-                </div>
-                <div className={`p-4 ${viewMode === "list" ? "flex-1" : ""}`}>
-                  <p className="text-xs uppercase text-gray-500 font-gill-sans tracking-widest mb-1">Home Decors</p>
-                  <h3 className="text-lg font-medium text-gray-900 font-gill-sans mb-2">{product.name}</h3>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg font-bold text-gray-900">
-                      LE {product.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </span>
-                    {product.originalPrice && (
-                      <span className="text-sm text-gray-400 line-through">
-                        LE {product.originalPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex gap-1">
-                    {product.colors.slice(0, 3).map((color, index) => (
-                      <div
-                        key={index}
-                        className="w-4 h-4 rounded-full border border-gray-300"
-                        style={{ backgroundColor: color.toLowerCase().replace(" ", "") }}
-                        title={color}
-                      />
-                    ))}
-                    {product.colors.length > 3 && (
-                      <span className="text-xs text-gray-500 ml-1">+{product.colors.length - 3}</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+                </Link>
+              )
+            })}
+          </div>
+        )}
 
         {/* Load More */}
         <div className="text-center mt-12">
