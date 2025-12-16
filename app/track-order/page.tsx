@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,7 +11,7 @@ import Footer from "../components/footer"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
-export default function TrackOrderPage() {
+function TrackOrderPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [orderNumber, setOrderNumber] = useState("")
@@ -298,6 +298,20 @@ export default function TrackOrderPage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function TrackOrderPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 font-gill-sans">Loading...</p>
+        </div>
+      </div>
+    }>
+      <TrackOrderPageContent />
+    </Suspense>
   )
 }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,7 @@ import Footer from "../components/footer"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
-export default function OrderConfirmationPage() {
+function OrderConfirmationPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const orderNumber = searchParams.get("orderNumber")
@@ -254,6 +254,20 @@ export default function OrderConfirmationPage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function OrderConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 font-gill-sans">Loading...</p>
+        </div>
+      </div>
+    }>
+      <OrderConfirmationPageContent />
+    </Suspense>
   )
 }
 
