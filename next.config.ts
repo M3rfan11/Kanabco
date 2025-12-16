@@ -17,10 +17,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Allow build to continue with linting errors (for deployment)
-  eslint: {
-    ignoreDuringBuilds: true, // Ignore lint errors during build for deployment
-  },
   typescript: {
     // Allow build to continue with TypeScript errors (for deployment)
     ignoreBuildErrors: true, // Ignore TS errors during build for deployment
