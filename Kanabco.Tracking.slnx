@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Kanabco.Tracking/Kanabco.Tracking.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Kanabco.Tracking.Tests/Kanabco.Tracking.Tests.csproj" />
+  </Folder>
+</Solution>
