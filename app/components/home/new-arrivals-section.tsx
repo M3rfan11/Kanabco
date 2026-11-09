@@ -93,12 +93,14 @@ export default function NewArrivalsSection() {
           </div>
           <div className="flex gap-4 mt-8 md:mt-0">
             <button
+              data-track="new-arrivals-scroll"
               onClick={() => scroll("left")}
               className="w-12 h-12 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-[#ed6b3e] hover:text-[#ed6b3e] transition-colors"
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
             <button
+              data-track="new-arrivals-scroll"
               onClick={() => scroll("right")}
               className="w-12 h-12 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-[#ed6b3e] hover:text-[#ed6b3e] transition-colors"
             >

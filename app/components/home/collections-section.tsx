@@ -22,7 +22,7 @@ export default function CollectionsSection() {
             
           </div>
 
-          <Link href="/collections">
+          <Link href="/collections" data-track="collections-all">
             <Button
 
               variant="outline"
@@ -54,7 +54,7 @@ export default function CollectionsSection() {
               <p className="text-sm font-gill-sans mb-4 text-white" >
                 Be comfortable. Seat at home
               </p>
-              <button className="flex items-center space-x-2 text-[#ed6b3e] hover:text-[#ed6b3e]/80 transition-colors">
+              <button data-track="category-seating" className="flex items-center space-x-2 text-[#ed6b3e] hover:text-[#ed6b3e]/80 transition-colors">
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>
@@ -76,7 +76,7 @@ export default function CollectionsSection() {
               <p className="text-sm font-gill-sans mb-4 text-white" >
                 Create the perfect lounge area
               </p>
-              <button className="flex items-center space-x-2 text-[#ed6b3e] hover:text-[#ed6b3e]/80 transition-colors">
+              <button data-track="category-sofas" className="flex items-center space-x-2 text-[#ed6b3e] hover:text-[#ed6b3e]/80 transition-colors">
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>
@@ -98,7 +98,7 @@ export default function CollectionsSection() {
               <p className="text-sm font-gill-sans mb-4 text-white">
                 Surfaces that define your space
               </p>
-              <button className="flex items-center space-x-2 text-[#ed6b3e] hover:text-[#ed6b3e]/80 transition-colors">
+              <button data-track="category-tables" className="flex items-center space-x-2 text-[#ed6b3e] hover:text-[#ed6b3e]/80 transition-colors">
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>
@@ -120,7 +120,7 @@ export default function CollectionsSection() {
               <p className="text-sm font-gill-sans mb-4 text-white" >
                 Pieces that complete your home
               </p>
-              <button className="flex items-center space-x-2 text-[#ed6b3e] hover:text-[#ed6b3e]/80 transition-colors">
+              <button data-track="category-home-decor" className="flex items-center space-x-2 text-[#ed6b3e] hover:text-[#ed6b3e]/80 transition-colors">
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>

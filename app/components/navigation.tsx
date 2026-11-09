@@ -76,7 +76,7 @@ export default function Navigation() {
     >
       <div className="relative ">
         {/* Navbar */}
-        <nav className="w-full bg-gray-50 backdrop-blur-sm border-b border-gray-200 py-4 px-6 transition-all duration-300 rounded-t-[3rem]">
+        <nav data-track="menu" className="w-full bg-gray-50 backdrop-blur-sm border-b border-gray-200 py-4 px-6 transition-all duration-300 rounded-t-[3rem]">
           <div className="relative px-16 mx-auto flex items-center justify-between">
             {/* Left Navigation */}
             <div className="flex items-center space-x-2">

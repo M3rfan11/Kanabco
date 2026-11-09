@@ -104,7 +104,7 @@ export default function HeroSection() {
               {slides[current].heading}
             </h2>
 
-            <Link href={slides[current].buttonLink}>
+            <Link href={slides[current].buttonLink} data-track="hero-banner">
               <Button
                 className={`mt-6 font-gill-sans px-8 py-3 rounded-full text-lg tracking-wide text-white transition-opacity duration-300 ${
                   showContent ? "opacity-100" : "opacity-0"
@@ -119,6 +119,7 @@ export default function HeroSection() {
 
         {/* Arrows */}
         <button
+          data-track="hero-previous"
           onClick={prevSlide}
           disabled={isAnimating}
           className="absolute left-24 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full backdrop-blur-sm flex items-center justify-center z-10 disabled:opacity-50 transition-opacity"
@@ -127,6 +128,7 @@ export default function HeroSection() {
           <ChevronLeft className="w-6 h-6 text-white" />
         </button>
         <button
+          data-track="hero-next"
           onClick={nextSlide}
           disabled={isAnimating}
           className="absolute right-24 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full backdrop-blur-sm flex items-center justify-center z-10 disabled:opacity-50 transition-opacity"
