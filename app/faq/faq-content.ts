@@ -113,9 +113,8 @@ export const FAQ_SECTIONS: FaqSection[] = [
         id: "instalment-providers",
         question: "Which instalment providers are available?",
         answer: [
-          "We work with [providers]. You select your provider at checkout, and each one will walk you through their own application.",
+          "We work with valU, TRU, Souhoola and Aman. You select your provider at checkout, and each one will walk you through their own application.",
         ],
-        pending: "Name the providers that are live at checkout (the document lists Souhoola, TRU, Aman and valU to confirm).",
       },
       {
         id: "instalment-limit",
