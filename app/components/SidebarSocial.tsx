@@ -4,7 +4,8 @@ import { Facebook, Instagram } from "lucide-react"
 
 export default function SidebarSocial() {
   return (
-    <div className="fixed top-1/2 left-4 -translate-y-1/2 z-50">
+    // Hidden on phones, where it would cover the page text; shown from tablet width up.
+    <div className="fixed top-1/2 left-4 -translate-y-1/2 z-50 hidden md:block">
       <div
         className="w-16 h-80 rounded-full flex flex-col items-center justify-center gap-2 p-2 shadow-lg backdrop-blur-sm"
         style={{ backgroundColor: "rgba(24, 57, 92, 0.8)" }}
