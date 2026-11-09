@@ -338,7 +338,7 @@ public sealed partial class TrackingService(
 
     private static TrackingItemRowDto ToItemRow(TrackingEventItem i) => new(i.ProductId, i.ProductName, i.VariantLabel, i.Quantity, i.UnitPrice);
 
-    /// <summary>SQL Server returns DateTime without a kind; mark it UTC so the browser converts it to Cairo time.</summary>
+    /// <summary>Always send times marked UTC, so the browser converts them to Cairo time.</summary>
     internal static DateTime AsUtc(DateTime value) => DateTime.SpecifyKind(value, DateTimeKind.Utc);
 
     internal static string? Clip(string? value, int max) =>
