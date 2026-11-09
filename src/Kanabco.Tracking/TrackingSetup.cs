@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -95,15 +96,53 @@ public static class TrackingSetup
     private static Task<IResult> PageView(PageViewRequest? req, HttpContext http, PageTrackingService s, TrackingOptions o, ILoggerFactory log, CancellationToken ct) =>
         Safely(req, log, "page view", () => s.RecordPageViewAsync(req!, o.CustomerId(http.User), ct));
 
-    private static Task<IResult> Engagement(EngagementRequest? req, PageTrackingService s, ILoggerFactory log, CancellationToken ct) =>
-        Safely(req, log, "engagement", async () =>
+    // Time on page and clicks are often sent as the page closes, which browsers deliver reliably only
+    // as a beacon: a plain-text body with no extra headers. These two read JSON whatever the content type.
+    private static async Task<IResult> Engagement(HttpRequest http, PageTrackingService s, ILoggerFactory log, CancellationToken ct)
+    {
+        var req = await ReadBeaconAsync<EngagementRequest>(http, ct);
+        return await Safely(req, log, "engagement", async () =>
         {
             await s.RecordEngagementAsync(req!, ct);
             return true;
         });
+    }
 
-    private static Task<IResult> Click(ClickRequest? req, PageTrackingService s, ILoggerFactory log, CancellationToken ct) =>
-        Safely(req, log, "click", () => s.RecordClickAsync(req!, ct));
+    private static async Task<IResult> Click(HttpRequest http, PageTrackingService s, ILoggerFactory log, CancellationToken ct)
+    {
+        var req = await ReadBeaconAsync<ClickRequest>(http, ct);
+        return await Safely(req, log, "click", () => s.RecordClickAsync(req!, ct));
+    }
+
+    private const int MaxBeaconBytes = 4 * 1024;
+    private static readonly JsonSerializerOptions BeaconJson = new(JsonSerializerDefaults.Web);
+
+    private static async Task<T?> ReadBeaconAsync<T>(HttpRequest http, CancellationToken ct) where T : class
+    {
+        if (http.ContentLength is > MaxBeaconBytes)
+        {
+            return null;
+        }
+        using var buffer = new MemoryStream();
+        var chunk = new byte[1024];
+        int read;
+        while ((read = await http.Body.ReadAsync(chunk, ct)) > 0)
+        {
+            if (buffer.Length + read > MaxBeaconBytes)
+            {
+                return null;
+            }
+            buffer.Write(chunk, 0, read);
+        }
+        try
+        {
+            return buffer.Length == 0 ? null : JsonSerializer.Deserialize<T>(buffer.GetBuffer().AsSpan(0, (int)buffer.Length), BeaconJson);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
 
     /// <summary>400 for a request that is not a valid one; 202 otherwise, a failed write logged and skipped.</summary>
     private static async Task<IResult> Safely(object? req, ILoggerFactory log, string what, Func<Task<bool>> write)

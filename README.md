@@ -78,7 +78,8 @@ Admin filters: `from` and `to` are dates (yyyy-MM-dd), whole Cairo days, both in
 `page`, `pageSize`.
 
 Public endpoints answer 202 even when a write fails (logged), and 400 for a request that is not a
-valid one, so tracking cannot break the shop.
+valid one, so tracking cannot break the shop. `engagement` and `click` also accept a plain-text JSON
+body: the storefront sends them as beacons, the one request browsers still deliver while a page closes.
 
 ## What differs from the guide, and why
 
@@ -99,8 +100,23 @@ valid one, so tracking cannot break the shop.
 - **Homepage time**: views whose time never came back are shown as "Not measured", not "Under 10 s".
 - **Tracking.View must be set**, wired to the Tracking permission, rather than defaulting to any admin.
 
+## Trying it on one machine
+
+`samples/DevHost` is a stand-in for Kanabco's API: this module plus the few shop endpoints the
+storefront and admin page call (a product, sign-in tokens, placing an order). It is for trying the
+storefront branch `claude/tracking-tab` locally, not for production.
+
+```
+dotnet run --project samples/DevHost --urls http://localhost:8080
+```
+
+Then run the storefront (`npm run build && npx next start -p 3000`) and
+`node samples/DevHost/browser-check.js <folder for screenshots>`: it shops as three visitors (one
+orders, one bounces, one leaves at checkout), then opens the Tracking tab as staff with and without
+the permission.
+
 ## Tests
 
-`dotnet test` runs 19 tests against PostgreSQL (`KB_TEST_PG` sets the server; default
+`dotnet test` runs 20 tests against PostgreSQL (`KB_TEST_PG` sets the server; default
 `Host=localhost;Username=kbtest;Password=kbtest`). Production runs on SQL Server; the queries are
 the same LINQ.

@@ -147,6 +147,31 @@ public sealed class PageTrackingTests(TrackingApp app) : IClassFixture<TrackingA
     }
 
     [Fact]
+    public async Task Time_and_clicks_sent_as_beacons_while_the_page_closes_are_kept()
+    {
+        var day = app.UseDay(17);
+        var visit = NewVisit();
+        var view = await ViewAsync(visit, "home", entry: true);
+        async Task<HttpStatusCode> BeaconAsync(string path, string json)
+        {
+            using var content = new StringContent(json, System.Text.Encoding.UTF8, "text/plain");
+            using var r = await app.Client.PostAsync($"{path}?vid={visit.Visitor}", content);
+            return r.StatusCode;
+        }
+
+        var time = await BeaconAsync("/api/tracking/engagement", $$"""{"pageViewId":"{{view}}","activeSeconds":33}""");
+        var click = await BeaconAsync("/api/tracking/click", $$"""{"clickId":"{{Guid.NewGuid()}}","pageViewId":"{{view}}","visitorId":"{{visit.Visitor}}","sessionId":"{{visit.Session}}","pageType":"home","element":"whatsapp"}""");
+        var garbage = await BeaconAsync("/api/tracking/click", "not json");
+        var huge = await BeaconAsync("/api/tracking/engagement", new string(' ', 5000) + "{}");
+
+        Assert.Equal((HttpStatusCode.Accepted, HttpStatusCode.Accepted), (time, click));
+        Assert.Equal((HttpStatusCode.BadRequest, HttpStatusCode.BadRequest), (garbage, huge));
+        var home = await app.AdminGetAsync<HomepageResultDto>("/api/admin/tracking/homepage" + Day(day));
+        Assert.Equal(33, home.AvgActiveSeconds);
+        Assert.Equal("whatsapp", home.Elements.Single().Element);
+    }
+
+    [Fact]
     public async Task Page_views_that_are_not_valid_are_refused_and_a_repeat_is_stored_once()
     {
         var day = app.UseDay(16);

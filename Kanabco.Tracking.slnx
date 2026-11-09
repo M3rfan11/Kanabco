@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/DevHost/DevHost.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Kanabco.Tracking/Kanabco.Tracking.csproj" />
   </Folder>
