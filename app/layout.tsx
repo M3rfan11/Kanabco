@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ConditionalSidebar from "./components/ConditionalSidebar";
 import { CartProvider } from "./contexts/CartContext";
+import TrackingInit from "./components/TrackingInit";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +32,7 @@ export default function RootLayout({
         style={{ fontFamily: "Gill, sans-serif" }}
       >
         <CartProvider>
+          <TrackingInit />
           <ConditionalSidebar/>
           {children}
         </CartProvider>

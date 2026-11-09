@@ -491,6 +491,7 @@ export default function BundleBuilderSection() {
                         {/* Add to Bundle Button alone */}
                         <button
                           type="button"
+                          data-track="bundle-add"
                           onClick={() => addToBundle(product.id)}
                           className="product-form__submit button button--primary w-full py-3 rounded-full text-white text-sm font-medium tracking-wide hover:opacity-90 transition-opacity"
                           style={{ backgroundColor: "#18395c" }}

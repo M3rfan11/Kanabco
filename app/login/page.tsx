@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Navigation from "../components/navigation"
 import Footer from "../components/footer"
+import { identify } from "@/lib/tracking"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""
@@ -94,6 +95,7 @@ function LoginPageContent() {
         
         if (token) {
           sessionStorage.setItem("authToken", token)
+          identify()
           router.push(redirectTo)
         } else {
           setError("Authentication failed. Please try again.")
@@ -133,6 +135,7 @@ function LoginPageContent() {
         
         if (token) {
           sessionStorage.setItem("authToken", token)
+          identify()
           router.push(redirectTo)
         } else {
           setError("Login successful but no token received. Please try again.")
@@ -201,6 +204,7 @@ function LoginPageContent() {
           
           if (token) {
             sessionStorage.setItem("authToken", token)
+            identify()
             router.push(redirectTo)
           } else {
             setError("Account created but login failed. Please try logging in.")

@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import { trackAddToCart } from "@/lib/tracking"
 
 export interface CartItem {
   productId: number
@@ -50,6 +51,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [cartItems])
 
   const addToCart = (item: CartItem) => {
+    // For the admin Tracking tab; outside the state update, which React may run twice.
+    trackAddToCart({ productId: item.productId, variantId: item.variantId, quantity: item.quantity })
     setCartItems((prevItems) => {
       // Check if item already exists in cart
       const existingItemIndex = prevItems.findIndex(

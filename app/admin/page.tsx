@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Package, FolderTree, ShoppingCart, Users, TrendingUp, AlertCircle, Plus, Edit, Trash2, X, Upload, ChevronLeft, ChevronRight, GripVertical, Search, Filter, ChevronDown, ChevronUp, Shield, DollarSign, Calendar, User, Mail, Phone, MapPin, CreditCard, CheckCircle2, Clock, Truck, XCircle, Loader2 } from "lucide-react"
+import TrackingTab from "./tracking/TrackingTab"
 
 interface DashboardStats {
   totalProducts: number
@@ -450,7 +451,7 @@ export default function AdminDashboard() {
   const [showLogin, setShowLogin] = useState(true)
   const [loginForm, setLoginForm] = useState({ email: "", password: "" })
   const [loginError, setLoginError] = useState("")
-  const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "categories" | "inventory" | "orders" | "sales" | "customers" | "promocodes">("dashboard")
+  const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "categories" | "inventory" | "orders" | "sales" | "customers" | "promocodes" | "tracking">("dashboard")
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<Product[]>([])
@@ -645,6 +646,11 @@ export default function AdminDashboard() {
       }
       // If user is on products tab but doesn't have permission, redirect to dashboard
       if (activeTab === "products" && !hasPermission("Products", "Read") && !userRoles.includes("SuperAdmin")) {
+        setActiveTab("dashboard")
+        return
+      }
+      // The Tracking tab shows customers' names and phone numbers: Tracking.Read only
+      if (activeTab === "tracking" && !hasPermission("Tracking", "Read")) {
         setActiveTab("dashboard")
         return
       }
@@ -2928,6 +2934,20 @@ export default function AdminDashboard() {
               }`}
             >
               Promo Codes
+            </button>
+          )}
+
+          {/* Tracking - Show if user has Tracking.Read permission (SuperAdmin has every permission) */}
+          {hasPermission("Tracking", "Read") && (
+            <button
+              onClick={() => setActiveTab("tracking")}
+              className={`px-6 py-3 font-medium border-b-2 transition-colors ${
+                activeTab === "tracking"
+                  ? "border-[#ed6b3e] text-[#ed6b3e]"
+                  : "border-transparent text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Tracking
             </button>
           )}
 
@@ -5431,6 +5451,9 @@ export default function AdminDashboard() {
           <CustomersTab />
         </div>
       )}
+
+      {/* Tracking Tab */}
+      {activeTab === "tracking" && hasPermission("Tracking", "Read") && <TrackingTab />}
 
       {/* Promo Codes Tab */}
       {activeTab === "promocodes" && (

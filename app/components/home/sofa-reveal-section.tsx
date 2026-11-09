@@ -87,7 +87,7 @@ export default function SofaRevealSection() {
                 opacity: Math.max((scrollProgress - 0.5) * 15, 0),
               }}
             >
-              <button className="bg-[#18395c] text-white px-8 py-4 rounded-full font-medium hover:bg-[#7A4234] transition-all duration-300 shadow-lg">
+              <button data-track="sofas-collection" className="bg-[#18395c] text-white px-8 py-4 rounded-full font-medium hover:bg-[#7A4234] transition-all duration-300 shadow-lg">
                 VIEW OUR SOFAS COLLECTION
               </button>
             </div>

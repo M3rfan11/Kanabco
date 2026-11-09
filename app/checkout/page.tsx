@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,7 @@ import { ChevronLeft, CreditCard, Truck } from "lucide-react"
 import Navigation from "../components/navigation"
 import Footer from "../components/footer"
 import { useCart } from "../contexts/CartContext"
+import { clearCheckoutToken, getCheckoutToken, identify, trackInitiateCheckout } from "@/lib/tracking"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
@@ -35,6 +36,23 @@ export default function CheckoutPage() {
     governorate: "",
     postalCode: "",
   })
+
+  // Tracking tab: one initiated checkout once the cart has loaded from storage.
+  const checkoutTracked = useRef(false)
+  useEffect(() => {
+    if (checkoutTracked.current || cartItems.length === 0) return
+    checkoutTracked.current = true
+    trackInitiateCheckout(
+      cartItems.map((i) => ({ productId: i.productId, variantId: i.variantId, quantity: i.quantity })),
+    )
+  }, [cartItems])
+
+  // Tracking tab: the details typed so far, so a checkout left unfinished can still be followed up.
+  const shareContact = () => {
+    const name = `${formData.firstName} ${formData.lastName}`.trim()
+    if (!name && !formData.phone.trim() && !formData.email.trim()) return
+    identify({ name, phone: formData.phone, email: formData.email })
+  }
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const shippingCost = shippingMethod === "standard" ? 0 : shippingMethod === "express" ? 300 : 500
@@ -159,6 +177,7 @@ export default function CheckoutPage() {
             useCartItems: false,
             items: orderItems,
             promoCode: appliedPromoCode?.code || null,
+            checkoutToken: getCheckoutToken(),
             notes: `Shipping Method: ${shippingMethod}${appliedPromoCode ? ` | Promo Code: ${appliedPromoCode.code}` : ""}`
           }
         : {
@@ -170,9 +189,11 @@ export default function CheckoutPage() {
             shippingCost: shippingCost,
             paymentMethod: paymentMethod === "cash" ? "Cash on Delivery" : "Card",
             promoCode: appliedPromoCode?.code || null,
+            checkoutToken: getCheckoutToken(),
             notes: `Shipping Method: ${shippingMethod}${appliedPromoCode ? ` | Promo Code: ${appliedPromoCode.code}` : ""}`
           }
 
+      shareContact()
       const res = await fetch(endpoint, {
         method: "POST",
         headers,
@@ -184,6 +205,7 @@ export default function CheckoutPage() {
         const orderNum = data.orderNumber || (isAuthenticated ? data.orderNumber : data.orderNumber)
         setOrderNumber(orderNum)
         clearCart() // Clear cart after successful order
+        clearCheckoutToken() // the next checkout starts fresh
         // Redirect to order confirmation
         window.location.href = `/order-confirmation?orderNumber=${orderNum}&email=${encodeURIComponent(formData.email)}`
       } else {
@@ -262,6 +284,7 @@ export default function CheckoutPage() {
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onBlur={shareContact}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg font-gill-sans focus:outline-none focus:ring-1 focus:ring-burnt-orange"
                   />
                   <input
@@ -270,6 +293,7 @@ export default function CheckoutPage() {
                     required
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onBlur={shareContact}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg font-gill-sans focus:outline-none focus:ring-1 focus:ring-burnt-orange"
                   />
                 </div>
@@ -286,6 +310,7 @@ export default function CheckoutPage() {
                       required
                       value={formData.firstName}
                       onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                      onBlur={shareContact}
                       className="px-4 py-3 border border-gray-300 rounded-lg font-gill-sans focus:outline-none focus:ring-1 focus:ring-burnt-orange"
                     />
                     <input
@@ -294,6 +319,7 @@ export default function CheckoutPage() {
                       required
                       value={formData.lastName}
                       onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      onBlur={shareContact}
                       className="px-4 py-3 border border-gray-300 rounded-lg font-gill-sans focus:outline-none focus:ring-1 focus:ring-burnt-orange"
                     />
                   </div>
