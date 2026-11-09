@@ -36,10 +36,7 @@ app.UseAuthorization();
 app.UseRateLimiter();
 app.MapKanabcoTracking();
 
-using (var scope = app.Services.CreateScope())
-{
-    await scope.ServiceProvider.GetRequiredService<TrackingDbContext>().Database.EnsureCreatedAsync();
-}
+await app.Services.MigrateKanabcoTrackingAsync();
 
 // ---------- The shop endpoints the pages call ----------
 

@@ -26,11 +26,22 @@ public static class TrackingSetup
     public const string EventsLimit = "kb-tracking-events";
     public const string PagesLimit = "kb-tracking-pages";
 
-    /// <summary>SQL Server, in the shop's own database, with this module's own migrations history.</summary>
+    /// <summary>PostgreSQL, in the shop's own database, with this module's own migrations history.</summary>
     public static IServiceCollection AddKanabcoTracking(this IServiceCollection services, string connectionString, Action<TrackingOptions> configure) =>
         services.AddKanabcoTracking(
-            db => db.UseSqlServer(connectionString, sql => sql.MigrationsHistoryTable(TrackingDbContext.MigrationsHistoryTable)),
+            db => db.UseNpgsql(connectionString, pg => pg.MigrationsHistoryTable(TrackingDbContext.MigrationsHistoryTable)),
             configure);
+
+    /// <summary>
+    /// Creates or updates the tracking tables, the way the API already applies its own migrations when a
+    /// new version starts. Safe to run on every start: applied migrations are skipped.
+    /// </summary>
+    public static async Task MigrateKanabcoTrackingAsync(this IServiceProvider services, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        await using var scope = services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<TrackingDbContext>().Database.MigrateAsync(ct);
+    }
 
     public static IServiceCollection AddKanabcoTracking(this IServiceCollection services, Action<DbContextOptionsBuilder> database, Action<TrackingOptions> configure)
     {

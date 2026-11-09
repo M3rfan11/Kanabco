@@ -5,7 +5,8 @@ rate and time, homepage clicks. It follows the Tracking Tab Implementation Guide
 with the fixes from its review (listed at the end).
 
 It is a self-contained module: its own tables, its own `TrackingDbContext` and migration, and
-minimal-API endpoints. The shop's `AppDbContext` and existing tables are not changed.
+minimal-API endpoints. The shop's `AppDbContext` and existing tables are not changed. It runs on
+PostgreSQL, like the live API's `kanabco-postgres-prod` (the guide assumed SQL Server).
 
 ## Plugging it into the Kanabco API
 
@@ -44,13 +45,15 @@ minimal-API endpoints. The shop's `AppDbContext` and existing tables are not cha
 
    and add `public Guid? CheckoutToken { get; set; }` to the order request. It never throws.
 
-5. Create the tables:
+5. Create the tables the way the API already applies its own migrations when it starts, right
+   after the API's own migration call:
 
-   ```
-   dotnet ef database update --project <the API project> --context TrackingDbContext
+   ```csharp
+   await app.Services.MigrateKanabcoTrackingAsync();
    ```
 
-   or run `AddTracking.sql`, the same migration as a SQL script.
+   Its history is kept in `__TrackingMigrationsHistory`, apart from the API's. `AddTracking.sql`
+   is the same migration as a SQL script, for review or to run by hand.
 
 6. CORS: the storefront's address must be in the API's CORS policy. The storefront sends no
    cookies and no extra headers to these endpoints.
@@ -117,6 +120,5 @@ the permission.
 
 ## Tests
 
-`dotnet test` runs 20 tests against PostgreSQL (`KB_TEST_PG` sets the server; default
-`Host=localhost;Username=kbtest;Password=kbtest`). Production runs on SQL Server; the queries are
-the same LINQ.
+`dotnet test` runs 20 tests against PostgreSQL, applying the real migration first (`KB_TEST_PG`
+sets the server; default `Host=localhost;Username=kbtest;Password=kbtest`).

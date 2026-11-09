@@ -91,13 +91,13 @@ public class TrackingDbContext(DbContextOptions<TrackingDbContext> options) : Db
     }
 }
 
-/// <summary>For <c>dotnet ef migrations add</c> only: SQL Server, as in production. Nothing connects to it.</summary>
+/// <summary>For <c>dotnet ef migrations add</c> only: PostgreSQL, as in production (kanabco-postgres-prod). Nothing connects to it.</summary>
 public sealed class TrackingDbContextDesignFactory : IDesignTimeDbContextFactory<TrackingDbContext>
 {
     public TrackingDbContext CreateDbContext(string[] args) =>
         new(new DbContextOptionsBuilder<TrackingDbContext>()
-            .UseSqlServer(
-                "Server=localhost;Database=KanabcoDesignTime;Trusted_Connection=True;TrustServerCertificate=True",
-                sql => sql.MigrationsHistoryTable(TrackingDbContext.MigrationsHistoryTable))
+            .UseNpgsql(
+                "Host=localhost;Database=kanabco_design_time",
+                pg => pg.MigrationsHistoryTable(TrackingDbContext.MigrationsHistoryTable))
             .Options);
 }

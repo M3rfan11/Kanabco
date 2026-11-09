@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -16,16 +17,16 @@ namespace Kanabco.Tracking.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ClickId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    PageViewId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    VisitorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SessionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    PageType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Element = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    ProductId = table.Column<int>(type: "int", nullable: true),
-                    TargetPath = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
-                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ClickId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PageViewId = table.Column<Guid>(type: "uuid", nullable: false),
+                    VisitorId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SessionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PageType = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Element = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ProductId = table.Column<int>(type: "integer", nullable: true),
+                    TargetPath = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -37,20 +38,20 @@ namespace Kanabco.Tracking.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PageViewId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    VisitorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SessionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CustomerId = table.Column<int>(type: "int", nullable: true),
-                    PageType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    ProductId = table.Column<int>(type: "int", nullable: true),
-                    Path = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
-                    IsEntry = table.Column<bool>(type: "bit", nullable: false),
-                    ReferrerHost = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    UtmSource = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    UtmCampaign = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    ActiveSeconds = table.Column<int>(type: "int", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PageViewId = table.Column<Guid>(type: "uuid", nullable: false),
+                    VisitorId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SessionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CustomerId = table.Column<int>(type: "integer", nullable: true),
+                    PageType = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    ProductId = table.Column<int>(type: "integer", nullable: true),
+                    Path = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
+                    IsEntry = table.Column<bool>(type: "boolean", nullable: false),
+                    ReferrerHost = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    UtmSource = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    UtmCampaign = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    ActiveSeconds = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -61,16 +62,16 @@ namespace Kanabco.Tracking.Migrations
                 name: "TrackingVisitors",
                 columns: table => new
                 {
-                    VisitorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CustomerId = table.Column<int>(type: "int", nullable: true),
-                    ContactName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
-                    ContactPhone = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: true),
-                    ContactEmail = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    FirstUtmSource = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    FirstUtmMedium = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    FirstUtmCampaign = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    FirstSeenUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    LastSeenUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    VisitorId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CustomerId = table.Column<int>(type: "integer", nullable: true),
+                    ContactName = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: true),
+                    ContactPhone = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: true),
+                    ContactEmail = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    FirstUtmSource = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    FirstUtmMedium = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    FirstUtmCampaign = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    FirstSeenUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastSeenUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -82,23 +83,23 @@ namespace Kanabco.Tracking.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    EventId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    EventType = table.Column<string>(type: "nvarchar(32)", maxLength: 32, nullable: false),
-                    VisitorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CustomerId = table.Column<int>(type: "int", nullable: true),
-                    SessionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    CheckoutToken = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OrderId = table.Column<int>(type: "int", nullable: true),
-                    SupersededAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    TotalValue = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    ItemCount = table.Column<int>(type: "int", nullable: false),
-                    PageUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    UtmSource = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    UtmMedium = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    UtmCampaign = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    Fbclid = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    EventId = table.Column<Guid>(type: "uuid", nullable: false),
+                    EventType = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    VisitorId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CustomerId = table.Column<int>(type: "integer", nullable: true),
+                    SessionId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CheckoutToken = table.Column<Guid>(type: "uuid", nullable: true),
+                    OrderId = table.Column<int>(type: "integer", nullable: true),
+                    SupersededAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    TotalValue = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    ItemCount = table.Column<int>(type: "integer", nullable: false),
+                    PageUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    UtmSource = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    UtmMedium = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    UtmCampaign = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Fbclid = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -116,14 +117,14 @@ namespace Kanabco.Tracking.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     TrackingEventId = table.Column<long>(type: "bigint", nullable: false),
-                    ProductId = table.Column<int>(type: "int", nullable: false),
-                    VariantId = table.Column<int>(type: "int", nullable: true),
-                    ProductName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    VariantLabel = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    Quantity = table.Column<int>(type: "int", nullable: false),
-                    UnitPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false)
+                    ProductId = table.Column<int>(type: "integer", nullable: false),
+                    VariantId = table.Column<int>(type: "integer", nullable: true),
+                    ProductName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    VariantLabel = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    Quantity = table.Column<int>(type: "integer", nullable: false),
+                    UnitPrice = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false)
                 },
                 constraints: table =>
                 {

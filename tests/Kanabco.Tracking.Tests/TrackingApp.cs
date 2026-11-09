@@ -63,8 +63,8 @@ public class TrackingApp : IAsyncLifetime
         await _app.StartAsync();
         Client = _app.GetTestClient();
 
-        await using var scope = _app.Services.CreateAsyncScope();
-        await scope.ServiceProvider.GetRequiredService<TrackingDbContext>().Database.EnsureCreatedAsync();
+        // The real migration, as the API applies it on start.
+        await _app.Services.MigrateKanabcoTrackingAsync();
     }
 
     public async Task DisposeAsync()
